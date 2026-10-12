@@ -1,5 +1,6 @@
 #include "application.h"
 #include "args_parser.h"
+#include "common/app_paths.h"
 #include "common/bess_assert.h"
 #include "crash_detail_helper.h"
 #include <filesystem>
@@ -15,6 +16,7 @@
 bool isValidStartDir();
 bool validateStartDir(char **argv);
 void useBundledPython(char **argv);
+void useUserDataDirs(char **argv);
 Bess::AppStartupFlags prepareFlags(const AppArgs &args);
 
 int main(int argc, char **argv) {
@@ -27,6 +29,7 @@ int main(int argc, char **argv) {
     }
 
     useBundledPython(argv);
+    useUserDataDirs(argv);
 
     SETUP_CRASH_DETAIL_HELPER
 
@@ -109,6 +112,37 @@ void useBundledPython(char **argv) {
     if (std::filesystem::exists(pythonHome / "lib")) {
         setenv("PYTHONHOME", pythonHome.lexically_normal().c_str(), 1);
         setenv("PYTHONDONTWRITEBYTECODE", "1", 1);
+    }
+#endif
+}
+
+void useUserDataDirs(char **argv) {
+#ifdef __APPLE__
+    // Bess.app is signed and may run from a read-only disk image, so it must
+    // not write bess.log or bess.ini into Contents/Resources. Use the standard
+    // per-user locations instead; fall back to the working directory if they
+    // cannot be created.
+    const auto exeDir = getExecutablePath(argv).parent_path();
+    const char *home = std::getenv("HOME");
+    if (home == nullptr ||
+        !std::filesystem::exists(exeDir / ".." / "Resources" / "assets")) {
+        return;
+    }
+
+    const auto library = std::filesystem::path(home) / "Library";
+    const auto logDir = library / "Logs" / "Bess";
+    const auto configDir = library / "Application Support" / "Bess";
+
+    std::error_code ec;
+    std::filesystem::create_directories(logDir, ec);
+    if (!ec) {
+        Bess::AppPaths::setLogDirectory(logDir);
+    }
+
+    ec.clear();
+    std::filesystem::create_directories(configDir, ec);
+    if (!ec) {
+        Bess::AppPaths::setConfigDirectory(configDir);
     }
 #endif
 }

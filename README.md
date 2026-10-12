@@ -83,6 +83,8 @@ Apple Silicon, macOS 26 or newer, with Xcode Command Line Tools and Homebrew.
    with (CMake picks the newest one installed) and the Homebrew dylibs it links, such as freetype.
    When launched from Finder, `yosys` is not on the PATH, so Verilog import only works when
    started from a terminal.
+   The app writes its log to `~/Library/Logs/Bess/bess.log` and its UI layout to
+   `~/Library/Application Support/Bess/bess.ini`, so it also runs from a read-only disk image.
 
 ## TODO
 - [x] Architecture Overhaul and Usability Improvements - [Details](https://github.com/shivang51/bess/pull/25)
