@@ -79,9 +79,10 @@ Apple Silicon, macOS 26 or newer, with Xcode Command Line Tools and Homebrew.
    ./scripts/package_macos_app.sh   # creates bin/Release/arm64/Bess.app
    open bin/Release/arm64/Bess.app
    ```
-   The bundle is ad-hoc signed and still uses the Homebrew Python framework it was built with
-   (CMake picks the newest one installed). When launched
-   from Finder, `yosys` is not on the PATH, so Verilog import only works when started from a terminal.
+   The bundle is ad-hoc signed and self-contained: it embeds the Python framework it was built
+   with (CMake picks the newest one installed) and the Homebrew dylibs it links, such as freetype.
+   When launched from Finder, `yosys` is not on the PATH, so Verilog import only works when
+   started from a terminal.
 
 ## TODO
 - [x] Architecture Overhaul and Usability Improvements - [Details](https://github.com/shivang51/bess/pull/25)

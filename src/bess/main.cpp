@@ -8,11 +8,13 @@
 #ifdef __APPLE__
     #include <climits>
     #include <cstdint>
+    #include <cstdlib>
     #include <mach-o/dyld.h>
 #endif
 
 bool isValidStartDir();
 bool validateStartDir(char **argv);
+void useBundledPython(char **argv);
 Bess::AppStartupFlags prepareFlags(const AppArgs &args);
 
 int main(int argc, char **argv) {
@@ -23,6 +25,8 @@ int main(int argc, char **argv) {
                   << std::endl;
         return -1;
     }
+
+    useBundledPython(argv);
 
     SETUP_CRASH_DETAIL_HELPER
 
@@ -92,4 +96,19 @@ bool validateStartDir(char **argv) {
 #endif
 
     return isValidStartDir();
+}
+
+void useBundledPython(char **argv) {
+#ifdef __APPLE__
+    // Bess.app embeds Python.framework (scripts/package_macos_app.sh). Point
+    // the interpreter at its stdlib instead of the build machine's prefix, and
+    // keep it from writing __pycache__ into the signed bundle.
+    const auto pythonHome = getExecutablePath(argv).parent_path() / ".." /
+                            "Frameworks" / "Python.framework" / "Versions" /
+                            "Current";
+    if (std::filesystem::exists(pythonHome / "lib")) {
+        setenv("PYTHONHOME", pythonHome.lexically_normal().c_str(), 1);
+        setenv("PYTHONDONTWRITEBYTECODE", "1", 1);
+    }
+#endif
 }
